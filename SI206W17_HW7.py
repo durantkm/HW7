@@ -95,7 +95,7 @@ TDB_cur = connection_TDB.cursor()
 # Write code to drop the Tweets table if it exists, and create the table (so you can run the program over and over), with the correct (4) column names and appropriate types for each.
 # HINT: Remember that the time_posted column should be the TIMESTAMP data type!
 try:
-	TDB_cur.execute("DROP TABLE Tweets")
+	TDB_cur.execute("DROP TABLE IF EXISTS Tweets")
 	connection_TDB.commit()
 except:
 	pass
@@ -138,15 +138,37 @@ connection_TDB.commit()
 
 
 # Select from the database all of the TIMES the tweets you collected were posted and fetch all the tuples that contain them in to the variable tweet_posted_times.
+tweet_posted_times = []
 
+query_time_posted = 'SELECT time_posted FROM Tweets' 
 
+TDB_cur.execute(query_time_posted)
+for row in TDB_cur:
+	tweet_posted_times.append(row)
 # Select all of the tweets (the full rows/tuples of information) that have been retweeted MORE than 2 times, and fetch them into the variable more_than_2_rts.
 
+more_than_2_rts = []
 
+query_mor2_retweet = 'SELECT * FROM Tweets WHERE retweets > 2'
+
+TDB_cur.execute(query_mor2_retweet)
+for row in TDB_cur:
+	more_than_2_rts.append(row)
 
 # Select all of the TEXT values of the tweets that are retweets of another account (i.e. have "RT" at the beginning of the tweet text). Save the FIRST ONE from that group of text values in the variable first_rt. Note that first_rt should contain a single string value, not a tuple.
 
+first_rt = ''
+rt_strings = []
+query_retweet_text = 'SELECT tweet_text FROM Tweets'
 
+TDB_cur.execute(query_retweet_text)
+for row in TDB_cur:
+	if('RT' in row[0]):
+		rt_strings.append(row)
+
+first_rt = rt_strings[0][0]
+
+connection_TDB.close()
 
 # Finally, done with database stuff for a bit: write a line of code to close the cursor to the database.
 
@@ -166,8 +188,12 @@ connection_TDB.commit()
 
 # If you want to challenge yourself here -- this function definition (what goes under the def statement) CAN be written in one line! Definitely, definitely fine to write it with multiple lines, too, which will be much easier and clearer.
 
-
-
+def get_twitter_users(string):
+	response = re.findall(r"(@(\w+))", string)
+	desired_user_name = []
+	for item in response:
+		desired_user_name.append(item[1])
+	return {screen_name for screen_name in desired_user_name}
 
 
 #########
