@@ -55,31 +55,26 @@ except:
 # Your function must cache data it retrieves and rely on a cache file!
 # Note that this is a lot like work you have done already in class (but, depending upon what you did previously, may not be EXACTLY the same, so be careful your code does exactly what you want here).
 
-
-def get_tweets_from_user(username):
-	unique_identifier = "twitter_{}".format(username) # seestring formatting chapter
-	# see if that username+twitter is in the cache diction!
+def get_user_tweets(unique_identifier):
 	if unique_identifier in CACHE_DICTION: # if it is...
-		print('using cached data for', username)
 		twitter_results = CACHE_DICTION[unique_identifier] # grab the data from the cache!
 	else:
-		print('getting data from internet for', username)
-		twitter_results = api.user_timeline(username) # get it from the internet
-		# but also, save in the dictionary to cache it!
+		twitter_results = api.user_timeline(unique_identifier) # get it from the internet
+			# but also, save in the dictionary to cache it!
 		CACHE_DICTION[unique_identifier] = twitter_results # add it to the dictionary -- new key-val pair
-		# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
+			# and then write the whole cache dictionary, now with new info added, to the file, so it'll be there even after your program closes!
 		f = open(CACHE_FNAME,'w') # open the cache file for writing
 		f.write(json.dumps(CACHE_DICTION)) # make the whole dictionary holding data and unique identifiers into a json-formatted string, and write that wholllle string to a file so you'll have it next time!
 		f.close()
-
-	# now no matter what, you have what you need in the twitter_results variable still, go back to what we were doing!
-	tweet_texts = [] # collect 'em all!
+		# now no matter what, you have what you need in the twitter_results variable still, go back to what we were doing!
+	tweet_response_info = [] # collect 'em all!
 	for tweet in twitter_results:
-		File - open("testfile", w)
-		tweet_texts.append(tweet["text"])
-		File.write(tweet)
-	File.close()
-	return tweet_texts[:3]
+		tweet_response_info.append(tweet)
+	try:
+		return tweet_response_info[:20]
+	except:
+		print("There were less than 20 results")
+		return tweet_response_info
 
 
 # Write code to create/build a connection to a database: tweets.db,
@@ -94,27 +89,43 @@ def get_tweets_from_user(username):
 # Below we have provided interim outline suggestions for what to do, sequentially, in comments.
 
 # Make a connection to a new database tweets.db, and create a variable to hold the database cursor.
-
+connection_TDB = sqlite3.connect('tweets.db')
+TDB_cur = connection_TDB.cursor()
 
 # Write code to drop the Tweets table if it exists, and create the table (so you can run the program over and over), with the correct (4) column names and appropriate types for each.
 # HINT: Remember that the time_posted column should be the TIMESTAMP data type!
-
+try:
+	TDB_cur.execute("DROP TABLE Tweets")
+	connection_TDB.commit()
+except:
+	pass
+creation_statement = "CREATE TABLE IF NOT EXISTS " 
+creation_statement += "Tweets (tweet_id INTEGER, author TEXT, time_posted TIMESTAMP, tweet_text TEXT, retweets INTEGER )"
+TDB_cur.execute(creation_statement)
+connection_TDB.commit()
 
 # Invoke the function you defined above to get a list that represents a bunch of tweets from the UMSI timeline. Save those tweets in a variable called umsi_tweets.
+user_input = "umsi"
+#user_input = str(input("Please input a twitter username you wish to search"))
 
-
+umsi_tweets = get_user_tweets(user_input)
 
 
 # Use a for loop, the cursor you defined above to execute INSERT statements, that insert the data from each of the tweets in umsi_tweets into the correct columns in each row of the Tweets database table.
 
 # (You should do nested data investigation on the umsi_tweets value to figure out how to pull out the data correctly!)
 
+#tweet_id = tweet[lst num]['id'] author = tweet[listnum]['user']['name']
+#time_posted = tweet[lstnum]['created_at'] tweet_text = tweet[listnum]['text']
+#retweets = tweet[lstnum]['retweet_count']
+insert_statement = 'INSERT INTO Tweets VALUES (?, ?, ?, ?, ?)'
 
-
-
+for tweet in umsi_tweets:
+	tweet_data = (tweet['id'], tweet['user']['name'], tweet['created_at'], tweet['text'], tweet['retweet_count'])
+	TDB_cur.execute(insert_statement, tweet_data)
 # Use the database connection to commit the changes to the database
 
-
+connection_TDB.commit()
 
 # You can check out whether it worked in the SQLite browser! (And with the tests.)
 
